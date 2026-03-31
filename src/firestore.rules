@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: userProfiles
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - experience: string (required)
+    //   - budget: string (required)
+    //   - time: string (required)
+    //   - industry: string (required)
+    //   - goal: string (required)
+    //   - startupIdea: string (required)
+    //   - currentLevel: number (required)
+    //   - completedTasks: list (required)
+    //   - isLevelCompleted: bool (required)
+    //   - roadmap: map (optional)
+    //
+    // Collection: userProfiles/{uid}/tasks
+    // Document ID: {taskId}
+    // Fields:
+    //   - id: string (required)
+    //   - level: number (required)
+    //   - title: string (required)
+    //   - description: string (required)
+    //   - isCompleted: bool (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'experience', 'budget', 'time', 'industry', 'goal', 'startupIdea', 'currentLevel', 'completedTasks', 'isLevelCompleted']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.experience is string && data.experience.size() < 100 &&
+             data.budget is string && data.budget.size() < 100 &&
+             data.time is string && data.time.size() < 100 &&
+             data.industry is string && data.industry.size() < 100 &&
+             data.goal is string && data.goal.size() < 500 &&
+             data.startupIdea is string && data.startupIdea.size() < 1000 &&
+             data.currentLevel is number && data.currentLevel >= 1 && data.currentLevel <= 6 &&
+             data.completedTasks is list &&
+             data.isLevelCompleted is bool;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['id', 'level', 'title', 'description', 'isCompleted']) &&
+             data.id is string &&
+             data.level is number &&
+             data.title is string && data.title.size() < 200 &&
+             data.description is string && data.description.size() < 1000 &&
+             data.isCompleted is bool;
+    }
+
+    match /userProfiles/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(uid) && isValidUserProfile(request.resource.data);
+      
+      match /tasks/{taskId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidTask(request.resource.data);
+        allow update: if isOwner(uid) && isValidTask(request.resource.data);
+        allow delete: if isOwner(uid);
+      }
+    }
+  }
+}

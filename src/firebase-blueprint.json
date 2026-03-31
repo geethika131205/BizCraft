@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Stores user startup profile and progress.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "experience": { "type": "string", "description": "User's experience level." },
+        "budget": { "type": "string", "description": "User's budget constraint." },
+        "time": { "type": "string", "description": "User's time commitment." },
+        "industry": { "type": "string", "description": "Target industry." },
+        "goal": { "type": "string", "description": "Startup goal." },
+        "startupIdea": { "type": "string", "description": "The startup idea." },
+        "currentLevel": { "type": "integer", "description": "Current level (1-6)." },
+        "completedTasks": { "type": "array", "items": { "type": "string" }, "description": "List of completed task IDs." },
+        "isLevelCompleted": { "type": "boolean", "description": "Whether the current level is completed." },
+        "roadmap": { "type": "object", "description": "The generated roadmap JSON." }
+      },
+      "required": ["uid", "experience", "budget", "time", "industry", "goal", "startupIdea", "currentLevel"]
+    },
+    "task": {
+      "title": "Task",
+      "description": "An actionable task for a specific level.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "level": { "type": "integer" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "isCompleted": { "type": "boolean" }
+      },
+      "required": ["id", "level", "title", "isCompleted"]
+    }
+  },
+  "firestore": {
+    "/userProfiles/{uid}": {
+      "schema": "userProfile",
+      "description": "User profile and progress data."
+    },
+    "/userProfiles/{uid}/tasks/{taskId}": {
+      "schema": "task",
+      "description": "Tasks for the user's current level."
+    }
+  }
+}
